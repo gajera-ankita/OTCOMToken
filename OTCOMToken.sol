@@ -284,8 +284,8 @@ contract OTCOMToken is Ownable {
     uint256 private  devTaxShare = 67;      
     uint256 public   taxThreshold = 10000 * 10**uint256(_decimals); // Threshold for performing swapandliquify
  
-    IUniswapV2Router02 public uniswapV2Router;
-    address public _uniswapPair;
+    IUniswapV2Router02 public immutable uniswapV2Router;
+    address public immutable uniswapPair;
  
     bool private swapping;
     bool public swapEnabled = true;
@@ -314,7 +314,7 @@ contract OTCOMToken is Ownable {
             0xD99D1c33F9fC3444f8101754aBC46c52416550D1 //  here you can set router according your network
          );
         uniswapV2Router = _uniswapV2Router;
-        _uniswapPair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(
+        uniswapPair = IUniswapV2Factory(_uniswapV2Router.factory()).createPair(
             address(this),
             _uniswapV2Router.WETH()
         );
@@ -326,7 +326,6 @@ contract OTCOMToken is Ownable {
         emit Transfer(address(0), msg.sender, _totalSupply);
     }
  
-    //ERC20
     /**
     * @notice Retrieves the name of the token.
     * @dev This function returns the name of the token, which is often used for identification.
@@ -671,8 +670,8 @@ contract OTCOMToken is Ownable {
             return;
         }
  
-        bool isBuy = sender == _uniswapPair;
-        bool isSell = recipient == _uniswapPair;
+        bool isBuy = sender == uniswapPair;
+        bool isSell = recipient == uniswapPair;
  
         uint256 buyAndSellTax;
  
