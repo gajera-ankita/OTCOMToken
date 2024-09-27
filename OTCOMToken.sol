@@ -297,6 +297,7 @@ contract OTCOMToken is Ownable {
     event UpdatedDevWallet(address updatedDevWallet);
     event UpdatedTaxPercentage(uint256 updatedBuyAndSellTax,uint256 updatedLiquidityTax,uint256 updatedDevTax);
     event UpatedTaxThreshold(uint256 updateTaxThreshold);
+    event Burn(address indexed burner, uint256 amount);
 
     /**
     * @dev Constructor function that initializes the token contract.
@@ -374,6 +375,33 @@ contract OTCOMToken is Ownable {
         address account
     ) public view virtual  returns (uint256) {
         return _balances[account];
+    }
+
+    /**
+    * @dev Burns a specific amount of tokens from the caller's address.
+    * @param amount The amount of tokens to be burned.
+    */
+    function burn(uint256 amount) public onlyOwner {
+        _burn(msg.sender, amount);
+    }
+
+    /**
+    * @dev Internal function that burns a specified amount of tokens from a specified account.
+    * @param account The address of the account whose tokens are being burned.
+    * @param amount The amount of tokens to be burned.
+    */
+    function _burn(address account, uint256 amount) internal {
+        require(account != address(0), "ERC20: burn from the zero address");
+
+        uint256 accountBalance = _balances[account];
+        require(accountBalance >= amount, "ERC20: burn amount exceeds balance");
+        unchecked {
+            _balances[account] = accountBalance - amount;
+            _totalSupply -= amount;
+        }
+
+        emit Transfer(account, address(0), amount);
+        emit Burn(account, amount);
     }
  
     /**
