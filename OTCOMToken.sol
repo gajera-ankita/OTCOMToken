@@ -264,7 +264,7 @@ interface IUniswapV2Router02 is IRouter01 {
     ) external returns (uint[] memory amounts);
 }
  
-contract OTCOMToken is Ownable {
+contract OTCOMToken is Ownable ,IERC20 {
  
     string private constant _name = "OTCOM";
     string private constant _symbol = "otcm";
@@ -290,10 +290,7 @@ contract OTCOMToken is Ownable {
     bool private swapping;
     bool public swapEnabled = true;
  
-    //events
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(address indexed owner, address indexed spender, uint256 value);  
-    event TokenToEth(uint256 ETHAmount);
+    //events  
     event UpdatedDevWallet(address updatedDevWallet);
     event UpdatedTaxPercentage(uint256 updatedBuyAndSellTax,uint256 updatedLiquidityTax,uint256 updatedDevTax);
     event UpatedTaxThreshold(uint256 updateTaxThreshold);
@@ -309,6 +306,7 @@ contract OTCOMToken is Ownable {
     * @param _devWallet The address of the development wallet.
     */
     constructor(address _devWallet) {
+        require(_devWallet != address(0),"Dev wallet cannot be zero address");
         _balances[msg.sender] = _totalSupply;
  
         IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(
@@ -555,7 +553,7 @@ contract OTCOMToken is Ownable {
     * @param _taxPercentage The new total tax percentage in basis points (100,000 = 100%).
     */
     function setTaxPercentage(uint256 _taxPercentage) external onlyOwner {
-        require(_taxPercentage <= 100000, "Tax percentage cannot exceed 100%");
+        require(_taxPercentage <= 25000, "Tax percentage cannot exceed 25%");
         
         // Split the total tax percentage equally between liquidityTax and devTax
         liquidityTaxPercentage = _taxPercentage / 2;
@@ -623,7 +621,6 @@ contract OTCOMToken is Ownable {
     * - Computes the ETH balance gained from the swap and determines the amount for the developer's share.
     * - Transfers the developer's share of ETH to the designated development wallet.
     * - If there is any ETH remaining after the developer's share is deducted, it adds liquidity to the pool.
-    * - Emits a `TokenToEth` event to log the amount of tokens swapped for ETH.
     */
     function swapAndLiquify() internal {
         uint256 contractTokenBalance = balanceOf(address(this));
@@ -650,7 +647,6 @@ contract OTCOMToken is Ownable {
                 addLiquidity(otherLiqHalf, newBalance);
             }
         }
-        emit  TokenToEth(swapToken);
     }
  
     /**
