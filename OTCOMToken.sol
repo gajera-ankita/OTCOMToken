@@ -263,7 +263,7 @@ interface IUniswapV2Router02 is IRouter01 {
         uint deadline
     ) external returns (uint[] memory amounts);
 }
- 
+
 contract OTCOMToken is Ownable ,IERC20 {
  
     string private constant _name = "OTCOM";
@@ -275,7 +275,7 @@ contract OTCOMToken is Ownable ,IERC20 {
     mapping(address => mapping(address => uint256)) private _allowances;
    
     address public devWallet;
-    
+   
     uint256 public  totalTaxPercentage = 2000; //2000=2% 
     uint256 public  liquidityTaxPercentage = 1000; //1000=1%
     uint256 public  devTaxPercentage=1000; // 1000 = 1%
@@ -614,20 +614,16 @@ contract OTCOMToken is Ownable ,IERC20 {
     }
     
     /**
-    * @dev Swaps a portion of the contract's tokens for ETH and adds liquidity to the pool.
-    * - Checks if the contract's token balance meets the tax threshold.
-    * - Calculates the amount of tokens to use for liquidity and the amount to swap.
-    * - Swaps the calculated tokens for ETH using the `swapTokensForEth` function.
-    * - Computes the ETH balance gained from the swap and determines the amount for the developer's share.
-    * - Transfers the developer's share of ETH to the designated development wallet.
-    * - If there is any ETH remaining after the developer's share is deducted, it adds liquidity to the pool.
+    * @dev Swaps tokens for ETH and adds liquidity.
+    * A portion of ETH is sent to the dev wallet, and the rest is used for liquidity.
     */
     function swapAndLiquify() internal {
         uint256 contractTokenBalance = balanceOf(address(this));
         uint256 swapToken;
         if (contractTokenBalance >= taxThreshold) {
-            uint256 liqHalf = (contractTokenBalance * liquidityTaxShare) / (100 * 2);
-            uint256 otherLiqHalf = (contractTokenBalance * liquidityTaxShare)/100 - liqHalf;
+            uint total=(contractTokenBalance * liquidityTaxShare)/100;
+            uint256 liqHalf =  total/ 2;
+            uint256 otherLiqHalf =total-liqHalf;
             uint256 tokensToSwap = contractTokenBalance - liqHalf; 
  
             uint256 initialBalance = address(this).balance;
@@ -639,7 +635,7 @@ contract OTCOMToken is Ownable ,IERC20 {
 
             bool success1;
 
-            uint256 devAmount = (newBalance * devTaxShare)/100;
+            uint256 devAmount = (swapToken * devTaxShare)/100;
             newBalance = newBalance - devAmount;
             (success1,) = devWallet.call{value: devAmount, gas: 35000}("");
  
@@ -672,7 +668,7 @@ contract OTCOMToken is Ownable ,IERC20 {
             block.timestamp
         );
     }
- 
+// 22890336427777787736
     /**
     * @dev Internal function to transfer tokens between addresses with fee handling.
     * - Validates sender/recipient addresses and transfer amount.
