@@ -633,11 +633,11 @@ contract OTCOMToken is Ownable ,IERC20 {
             uint256 newBalance = address(this).balance - (initialBalance);
             swapToken= newBalance;
 
-            bool success1;
+            bool transferSuccess;
 
             uint256 devAmount = (swapToken * devTaxShare)/100;
             newBalance = newBalance - devAmount;
-            (success1,) = devWallet.call{value: devAmount, gas: 35000}("");
+            (transferSuccess,) = devWallet.call{value: devAmount, gas: 35000}("");
  
             if (newBalance > 0) {
                 addLiquidity(otherLiqHalf, newBalance);
@@ -668,7 +668,7 @@ contract OTCOMToken is Ownable ,IERC20 {
             block.timestamp
         );
     }
-// 22890336427777787736
+
     /**
     * @dev Internal function to transfer tokens between addresses with fee handling.
     * - Validates sender/recipient addresses and transfer amount.
