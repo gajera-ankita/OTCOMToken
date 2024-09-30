@@ -280,8 +280,8 @@ contract OTCOMToken is Ownable ,IERC20 {
     uint256 public  liquidityTaxPercentage = 1000; //1000=1%
     uint256 public  devTaxPercentage=1000; // 1000 = 1%
 
-    uint256 private  liquidityTaxShare =50;    
-    uint256 private  devTaxShare = 67;      
+    uint256 private  liquidityTaxShare =50000;    
+    uint256 private  devTaxShare = 67000;      
     uint256 public   taxThreshold = 10000 * 10**uint256(_decimals); // Threshold for performing swapandliquify
  
     IUniswapV2Router02 public immutable uniswapV2Router;
@@ -621,7 +621,7 @@ contract OTCOMToken is Ownable ,IERC20 {
         uint256 contractTokenBalance = balanceOf(address(this));
         uint256 swapToken;
         if (contractTokenBalance >= taxThreshold) {
-            uint total=(contractTokenBalance * liquidityTaxShare)/100;
+            uint total=(contractTokenBalance * liquidityTaxShare)/100000;
             uint256 liqHalf =  total/ 2;
             uint256 otherLiqHalf =total-liqHalf;
             uint256 tokensToSwap = contractTokenBalance - liqHalf; 
@@ -635,7 +635,7 @@ contract OTCOMToken is Ownable ,IERC20 {
 
             bool transferSuccess;
 
-            uint256 devAmount = (swapToken * devTaxShare)/100;
+            uint256 devAmount = (swapToken * devTaxShare)/100000;
             newBalance = newBalance - devAmount;
             (transferSuccess,) = devWallet.call{value: devAmount, gas: 35000}("");
  
