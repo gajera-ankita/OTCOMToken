@@ -276,7 +276,6 @@ contract OTCOMToken is Ownable ,IERC20 {
    
     address public devWallet;
    
-    uint256 public  totalTaxPercentage = 2000; //2000=2% 
     uint256 public  liquidityTaxPercentage = 1000; //1000=1%
     uint256 public  devTaxPercentage=1000; // 1000 = 1%
 
@@ -292,7 +291,7 @@ contract OTCOMToken is Ownable ,IERC20 {
  
     //events  
     event UpdatedDevWallet(address updatedDevWallet);
-    event UpdatedTaxPercentage(uint256 updatedBuyAndSellTax,uint256 updatedLiquidityTax,uint256 updatedDevTax);
+    event UpdatedTaxPercentage(uint256 updatedLiquidityTax,uint256 updatedDevTax);
     event UpatedTaxThreshold(uint256 updateTaxThreshold);
     event Burn(address indexed burner, uint256 amount);
 
@@ -544,13 +543,8 @@ contract OTCOMToken is Ownable ,IERC20 {
     }
  
     /**
-    * @dev Sets the total tax percentage for the contract.
-    * - Only callable by the contract owner.
-    * - Ensures that the total tax percentage does not exceed 100% (represented as 100,000 basis points).
-    * - The tax is split equally between liquidity and development taxes.
-    * - Updates the `liquidityTaxPercentage`, `devTaxPercentage`, and `totalTaxPercentage` state variables.
-    * - Emits an `UpdatedTaxPercentage` event to log the new tax percentages.
-    * @param _taxPercentage The new total tax percentage in basis points (100,000 = 100%).
+    * @notice Sets the tax percentage, dividing it equally between liquidity and dev taxes.
+    * @param _taxPercentage Total tax percentage (max 25%, i.e., 25000).
     */
     function setTaxPercentage(uint256 _taxPercentage) external onlyOwner {
         require(_taxPercentage <= 25000, "Tax percentage cannot exceed 25%");
@@ -559,8 +553,7 @@ contract OTCOMToken is Ownable ,IERC20 {
         liquidityTaxPercentage = _taxPercentage / 2;
         devTaxPercentage = _taxPercentage / 2;
         
-        totalTaxPercentage = _taxPercentage;
-        emit UpdatedTaxPercentage(totalTaxPercentage,liquidityTaxPercentage,devTaxPercentage);
+        emit UpdatedTaxPercentage(liquidityTaxPercentage,devTaxPercentage);
     }
 
     /**
@@ -670,14 +663,12 @@ contract OTCOMToken is Ownable ,IERC20 {
     }
 
     /**
-    * @dev Internal function to transfer tokens between addresses with fee handling.
-    * - Validates sender/recipient addresses and transfer amount.
-    * - Handles special transfers for the owner or contract.
-    * - Identifies buy/sell transactions and manages fees.
-    * - Executes swapping and liquidity if conditions are met.
-    * @param sender The address sending the tokens.
+    * @notice Handles the internal token transfer logic, including tax deductions for buy/sell operations.
+    * @dev Applies liquidity and development taxes on buy/sell transactions involving the Uniswap pair.
+    *      Normal transfers occur without taxes if the sender or recipient is the owner or the contract itself.
+    * @param sender The address initiating the transfer.
     * @param recipient The address receiving the tokens.
-    * @param amount The number of tokens to transfer.
+    * @param amount The number of tokens being transferred.
     */
     function _transfer(address sender, address recipient, uint256 amount) internal {
         require(sender != address(0), "ERC20: transfer from the zero address");
@@ -693,7 +684,9 @@ contract OTCOMToken is Ownable ,IERC20 {
         bool isBuy = sender == uniswapPair;
         bool isSell = recipient == uniswapPair;
  
-        uint256 buyAndSellTax;
+        uint256 liquidtiyTax;
+        uint256 devTax;
+         uint256 totaltax;
  
         uint256 contractTokenBalance = balanceOf(address(this));
         bool canSwap = contractTokenBalance >= taxThreshold;
@@ -707,14 +700,15 @@ contract OTCOMToken is Ownable ,IERC20 {
             swapAndLiquify();
             swapping = false;
         }
-        uint256 fees = 0;
- 
+       
         if (isBuy || isSell) {
-                buyAndSellTax = _calculateTax(amount, totalTaxPercentage);
-                _transferTokens(sender, address(this), buyAndSellTax); 
-                fees =buyAndSellTax;
+                liquidtiyTax = _calculateTax(amount, liquidityTaxPercentage);
+                devTax=_calculateTax(amount, devTaxPercentage);
+                totaltax= liquidtiyTax + devTax;
+                _transferTokens(sender, address(this), totaltax); 
+        
             } 
-            amount -= fees;
+            amount -= totaltax;
             _transferTokens(sender, recipient, amount);
  
     }
@@ -726,7 +720,43 @@ contract OTCOMToken is Ownable ,IERC20 {
     * @return The calculated tax amount.
     */
     function _calculateTax(uint256 amount, uint256 _taxPercentage) internal pure returns (uint256) {
-        return amount * (_taxPercentage) / (100000);
+        return amount * (_taxPercentage) / (100000);/**
+
+                     ██████╗ ████████╗ ██████╗ ██████╗ ███╗   ███╗
+                    ██╔═══██╗╚══██╔══╝██╔════╝██╔═══██╗████╗ ████║
+                    ██║   ██║   ██║   ██║     ██║   ██║██╔████╔██║
+                    ██║   ██║   ██║   ██║     ██║   ██║██║╚██╔╝██║
+                    ╚██████╔╝   ██║   ╚██████╗╚██████╔╝██║ ╚═╝ ██║
+                     ╚═════╝    ╚═╝    ╚═════╝ ╚═════╝ ╚═╝     ╚═╝
+*/
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.26;
+ 
+/**
+ * @dev Provides information about the current execution context, including the
+ * sender of the transaction and its data. While these are generally available
+ * via msg.sender and msg.data, they should not be accessed in such a direct
+ * manner, since when dealing with meta-transactions the account sending and
+ * paying for execution may not be the actual sender (as far as an application
+ * is concerned).
+ *
+ * This contract is only required for intermediate, library-like contracts.
+ */
+abstract contract Context {
+    function _msgSender() internal view virtual returns (address) {
+        return msg.sender;
+    }
+ 
+    function _msgData() internal view virtual returns (bytes calldata) {
+        return msg.data;
+    }
+}
+ 
+/**
+ * @dev Contract module which provides a basic access control mechanism, where
+ * there is an account (an owner) that can be granted exclusive access to
+ * specific functions.
+
     }
  
     /**
