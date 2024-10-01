@@ -608,7 +608,7 @@ contract OTCOMToken is Ownable ,IERC20 {
     
     /**
     * @dev Swaps tokens for ETH and adds liquidity.
-    * A portion of ETH is sent to the dev wallet, and the rest is used for liquidity.
+    * A 1% of ETH is sent to the dev wallet, and the 1% is used for liquidity.
     */
     function swapAndLiquify() internal {
         uint256 contractTokenBalance = balanceOf(address(this));
@@ -720,43 +720,7 @@ contract OTCOMToken is Ownable ,IERC20 {
     * @return The calculated tax amount.
     */
     function _calculateTax(uint256 amount, uint256 _taxPercentage) internal pure returns (uint256) {
-        return amount * (_taxPercentage) / (100000);/**
-
-                     ██████╗ ████████╗ ██████╗ ██████╗ ███╗   ███╗
-                    ██╔═══██╗╚══██╔══╝██╔════╝██╔═══██╗████╗ ████║
-                    ██║   ██║   ██║   ██║     ██║   ██║██╔████╔██║
-                    ██║   ██║   ██║   ██║     ██║   ██║██║╚██╔╝██║
-                    ╚██████╔╝   ██║   ╚██████╗╚██████╔╝██║ ╚═╝ ██║
-                     ╚═════╝    ╚═╝    ╚═════╝ ╚═════╝ ╚═╝     ╚═╝
-*/
-// SPDX-License-Identifier: MIT
-pragma solidity 0.8.26;
- 
-/**
- * @dev Provides information about the current execution context, including the
- * sender of the transaction and its data. While these are generally available
- * via msg.sender and msg.data, they should not be accessed in such a direct
- * manner, since when dealing with meta-transactions the account sending and
- * paying for execution may not be the actual sender (as far as an application
- * is concerned).
- *
- * This contract is only required for intermediate, library-like contracts.
- */
-abstract contract Context {
-    function _msgSender() internal view virtual returns (address) {
-        return msg.sender;
-    }
- 
-    function _msgData() internal view virtual returns (bytes calldata) {
-        return msg.data;
-    }
-}
- 
-/**
- * @dev Contract module which provides a basic access control mechanism, where
- * there is an account (an owner) that can be granted exclusive access to
- * specific functions.
-
+        return amount * (_taxPercentage) / (100000);
     }
  
     /**
